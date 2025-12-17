@@ -30,8 +30,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const __app_id = 'petra-home';
-
 // --- TRANSLATION DICTIONARY ---
 const DICTIONARY = {
     tr: {
@@ -43,20 +41,14 @@ const DICTIONARY = {
         admin: 'YÖNETİM',
         productAdded: 'ÜRÜN SEPETİNİZE EKLENDİ',
         goToBag: 'SEPETE GİT',
-        itemDeleted: 'BİR ÜRÜN SİLİNDİ',
         welcome: 'Hoş geldiniz',
         accountCreated: 'Hesabınız oluşturuldu',
         loggedOut: 'Oturum kapatıldı',
-        newAddress: 'Yeni adres eklendi',
         favAdded: 'Favorilere eklendi',
         favRemoved: 'Favorilerden çıkarıldı',
         loginRequired: 'Favorilere eklemek için lütfen giriş yapın.',
         home: 'PETRA HOME',
-        all: 'TÜMÜ',
-        noProductFound: 'Aradığınız kriterlere uygun ürün bulunamadı.',
-        adminAuthError: 'Yönetim paneline erişmek için yetkili girişi yapmalısınız.',
         help: 'YARDIM',
-        helpRequestReceived: 'Talebiniz alınmıştır. En kısa sürede dönüş yapılacaktır.',
         about: 'HAKKIMIZDA'
     },
     en: {
@@ -68,20 +60,14 @@ const DICTIONARY = {
         admin: 'ADMIN',
         productAdded: 'ADDED TO BAG',
         goToBag: 'VIEW BAG',
-        itemDeleted: 'ITEM REMOVED',
         welcome: 'Welcome',
         accountCreated: 'Account created',
         loggedOut: 'Logged out',
-        newAddress: 'New address added',
         favAdded: 'Added to favorites',
         favRemoved: 'Removed from favorites',
         loginRequired: 'Please log in to add to favorites.',
         home: 'PETRA HOME',
-        all: 'ALL',
-        noProductFound: 'No products found matching your criteria.',
-        adminAuthError: 'Authorization required for admin panel.',
         help: 'HELP',
-        helpRequestReceived: 'Your request has been received. We will get back to you shortly.',
         about: 'ABOUT US'
     }
 };
@@ -105,8 +91,8 @@ const App: React.FC = () => {
   const [language, setLanguage] = useState<Language>('tr');
   const [loading, setLoading] = useState(true);
   const [productsRaw, setProductsRaw] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<string[]>(['TÜMÜ', 'AYNA', 'AYDINLATMA', 'DEKORATİF AKSESUAR', 'TABLO', 'MUM VE ODA KOKUSU', 'HALI']);
 
-  // Helper Translation Function
   const t = (key: keyof typeof DICTIONARY['tr']) => DICTIONARY[language][key];
   
   const getCategoryName = (cat: string) => {
@@ -125,7 +111,7 @@ const App: React.FC = () => {
       };
   };
 
-  // Firestore'dan Veri Çekme ve Seeding (İlk kurulum)
+  // Firestore'dan Veri Çekme
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -137,15 +123,20 @@ const App: React.FC = () => {
           } as Product));
           setProductsRaw(dbProducts.sort((a, b) => a.id - b.id));
         } else {
-          // Firestore boşsa initialProducts'ı yükle
           setProductsRaw(initialProducts);
+          // Firestore'a ilk tohumları at
           for (const p of initialProducts) {
             await setDoc(doc(db, 'products', String(p.id)), p);
           }
         }
+
+        // Kategorileri Çek
+        const catSnapshot = await getDocs(collection(db, 'categories'));
+        if (!catSnapshot.empty) {
+            setCategories(['TÜMÜ', ...catSnapshot.docs.map(d => d.id)]);
+        }
       } catch (error) {
-        console.error("Firebase Load Error:", error);
-        // Hata anında localstorage'a veya initial'a düşebiliriz ama Firebase öncelikli
+        console.error("Firebase Veri Yükleme Hatası:", error);
         setProductsRaw(initialProducts);
       } finally {
         setLoading(false);
@@ -158,7 +149,6 @@ const App: React.FC = () => {
       return productsRaw.map(localizeProduct);
   }, [productsRaw, language]);
 
-  const [categories, setCategories] = useState<string[]>(['TÜMÜ', 'AYNA', 'AYDINLATMA', 'DEKORATİF AKSESUAR', 'TABLO', 'MUM VE ODA KOKUSU', 'HALI']);
   const [selectedCategory, setSelectedCategory] = useState<string>('TÜMÜ');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
@@ -244,19 +234,22 @@ const App: React.FC = () => {
       window.scrollTo(0, 0);
   };
 
-  // Bulut CRUD İşlemleri
+  // Kalıcı CRUD İşlemleri
   const handleAddProduct = async (newProduct: Product) => {
       try {
           await setDoc(doc(db, 'products', String(newProduct.id)), newProduct);
           setProductsRaw(prev => [newProduct, ...prev]);
-          setToastMessage('Ürün başarıyla eklendi.');
-      } catch (e) { setToastMessage('Ekleme hatası oluştu.'); }
+          setToastMessage('Ürün başarıyla buluta eklendi.');
+      } catch (e) { 
+          console.error("Firestore Error:", e);
+          setToastMessage('Ekleme hatası! İnternet bağlantınızı ve Firebase kurallarınızı kontrol edin.'); 
+      }
       setTimeout(() => setToastMessage(''), 3000);
   };
 
   const handleUpdateProduct = async (updatedProduct: Product) => {
       try {
-          await updateDoc(doc(db, 'products', String(updatedProduct.id)), { ...updatedProduct });
+          await setDoc(doc(db, 'products', String(updatedProduct.id)), updatedProduct, { merge: true });
           setProductsRaw(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
           setToastMessage('Ürün güncellendi.');
       } catch (e) { setToastMessage('Güncelleme hatası.'); }
@@ -267,9 +260,23 @@ const App: React.FC = () => {
       try {
           await deleteDoc(doc(db, 'products', String(id)));
           setProductsRaw(prev => prev.filter(p => Number(p.id) !== Number(id)));
-          setToastMessage('Ürün silindi.');
+          setToastMessage('Ürün buluttan silindi.');
       } catch (e) { setToastMessage('Silme hatası.'); }
       setTimeout(() => setToastMessage(''), 3000);
+  };
+
+  const handleAddCategory = async (cat: string) => {
+      try {
+          await setDoc(doc(db, 'categories', cat.toUpperCase()), { name: cat.toUpperCase() });
+          setCategories(prev => Array.from(new Set([...prev, cat.toUpperCase()])));
+      } catch (e) { console.error(e); }
+  };
+
+  const handleDeleteCategory = async (cat: string) => {
+      try {
+          await deleteDoc(doc(db, 'categories', cat));
+          setCategories(prev => prev.filter(c => c !== cat));
+      } catch (e) { console.error(e); }
   };
 
   const handleLoginAttempt = async (emailInput: string, passwordInput: string): Promise<boolean> => {
@@ -335,7 +342,7 @@ const App: React.FC = () => {
 
   if (loading) return (
     <div className="h-screen flex items-center justify-center bg-white">
-      <p className="tracking-[0.5em] text-[10px] uppercase animate-pulse">PETRA HOME</p>
+      <p className="tracking-[0.5em] text-[10px] uppercase animate-pulse">PETRA HOME YÜKLENİYOR...</p>
     </div>
   );
 
@@ -368,7 +375,7 @@ const App: React.FC = () => {
          currentPage === 'help' ? <HelpPage onBackToHome={handleBackToList} onSubmitRequest={() => {}} language={language} /> :
          currentPage === 'about' ? <AboutPage onBackToHome={handleBackToList} language={language} /> :
          currentPage === 'account' && user ? <AccountPage user={user} onLogout={handleLogout} onBackToHome={handleBackToList} favoriteProducts={favoriteProducts} onProductClick={handleProductClick} onToggleFavorite={toggleFavorite} onAddAddress={() => {}} language={language} /> :
-         currentPage === 'admin' ? <AdminPanel products={productsRaw} categories={categories} onAddProduct={handleAddProduct} onUpdateProduct={handleUpdateProduct} onDeleteProduct={handleDeleteProduct} onAddCategory={() => {}} onDeleteCategory={() => {}} onBackToHome={handleBackToList} isCloudMode={true} /> :
+         currentPage === 'admin' ? <AdminPanel products={productsRaw} categories={categories} onAddProduct={handleAddProduct} onUpdateProduct={handleUpdateProduct} onDeleteProduct={handleDeleteProduct} onAddCategory={handleAddCategory} onDeleteCategory={handleDeleteCategory} onBackToHome={handleBackToList} isCloudMode={true} /> :
          currentPage === 'cart' ? <CartPage cart={cartRaw.map(i => ({...products.find(p => p.id === i.id)!, quantity: i.quantity}))} onBackToHome={handleBackToList} onRemoveFromCart={(id) => setCartRaw(prev => prev.filter(i => i.id !== id))} onCheckout={() => {}} onUpdateQuantity={(id, d) => setCartRaw(prev => prev.map(i => i.id === id ? {...i, quantity: Math.max(1, i.quantity + d)} : i))} language={language} /> :
          currentPage === 'detail' && selectedProduct ? <ProductDetail product={selectedProduct} cart={cartRaw} onClose={handleBackToList} onAddToCart={addToCart} onUpdateQuantity={() => {}} onGoToCart={handleGoToCart} language={language} /> :
          <>
@@ -386,13 +393,11 @@ const App: React.FC = () => {
         }
       </main>
 
-      {/* FOOTER BAR (BREADCRUMBS) */}
       <div className="fixed bottom-8 left-0 w-full h-10 bg-white/95 backdrop-blur-md border-t border-black/5 z-40 flex justify-between items-center px-6 md:px-8 text-[10px] uppercase tracking-widest font-medium">
           <div className="flex items-center text-black space-x-1">
               <button onClick={handleGoHome} className="hover:opacity-60 font-bold">{t('home')}</button>
               {selectedCategory !== 'TÜMÜ' && currentPage === 'list' && <><span className="text-gray-400">/</span><span className="text-gray-500">{getCategoryName(selectedCategory)}</span></>}
               {currentPage === 'detail' && selectedProduct && <><span className="text-gray-400">/</span><button onClick={() => { setSelectedCategory(selectedProduct.category); setCurrentPage('list'); setSelectedProduct(null); }} className="font-semibold">{getCategoryName(selectedProduct.category)}</button><span className="text-gray-400">/</span><span className="text-gray-500 line-clamp-1">{language === 'tr' ? selectedProduct.name : (selectedProduct.name_en || selectedProduct.name)}</span></>}
-              {['help', 'about', 'cart', 'account', 'login'].includes(currentPage) && <><span className="text-gray-400">/</span><span className="text-gray-500">{t(currentPage as any)}</span></>}
           </div>
           <div className="flex items-center space-x-3 text-black">
               <button onClick={() => setLanguage('tr')} className={language === 'tr' ? 'font-bold' : 'font-light'}>Türkçe</button>
