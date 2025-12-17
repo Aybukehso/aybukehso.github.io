@@ -18,9 +18,21 @@ import WhatsAppButton from './components/WhatsAppButton';
 // Gemini API
 import { GoogleGenAI } from "@google/genai";
 
-// Firebase
+// Firebase Modülleri
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, getDocs, deleteDoc, doc, setDoc, updateDoc, getDoc } from 'firebase/firestore';
+import { 
+    getFirestore, 
+    collection, 
+    onSnapshot,
+    addDoc,
+    setDoc, 
+    deleteDoc, 
+    doc, 
+    updateDoc, 
+    getDoc,
+    query,
+    orderBy
+} from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCW4UqAK1s9_kEhXb4l5jJGjKvP54auRj4",
@@ -101,70 +113,42 @@ interface DBUser extends User {
 const App: React.FC = () => {
   const [language, setLanguage] = useState<Language>('tr');
   const [loading, setLoading] = useState(true);
+  const [dbConnected, setDbConnected] = useState(false);
   const [productsRaw, setProductsRaw] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>(['TÜMÜ', 'AYNA', 'AYDINLATMA', 'DEKORATİF AKSESUAR', 'TABLO', 'MUM VE ODA KOKUSU', 'HALI']);
 
   const t = (key: keyof typeof DICTIONARY['tr']) => DICTIONARY[language][key];
   const getCategoryName = (cat: string) => (language === 'en' && CATEGORY_TRANSLATIONS[cat]) ? CATEGORY_TRANSLATIONS[cat] : cat;
 
-  const [isAiOpen, setIsAiOpen] = useState(false);
-  const [aiInput, setAiInput] = useState('');
-  const [aiHistory, setAiHistory] = useState<{role: 'user' | 'model', text: string, links?: any[]}[]>([]);
-  const [aiLoading, setAiLoading] = useState(false);
-  const chatEndRef = useRef<HTMLDivElement>(null);
-
+  // --- ANLIK VERİ TAKİBİ (ONSNAPSHOT) ---
   useEffect(() => {
-    if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
-  }, [aiHistory]);
-
-  const handleAskAi = async () => {
-    if (!aiInput.trim()) return;
-    const userMsg = aiInput;
-    setAiInput('');
-    setAiHistory(prev => [...prev, { role: 'user', text: userMsg }]);
-    setAiLoading(true);
-
-    try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
-            contents: userMsg,
-            config: {
-                systemInstruction: `Sen Petra Home'un uzman iç mimar asistanısın. Petra Home'un zarif stiline uygun dekorasyon önerileri ver.`,
-                tools: [{ googleSearch: {} }]
-            }
+    const q = query(collection(db, 'products'), orderBy('id', 'asc'));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const dbData = snapshot.docs.map(doc => ({ 
+          ...doc.data(), 
+          id: Number(doc.id) 
+      } as Product));
+      
+      if (dbData.length > 0) {
+        setProductsRaw(dbData);
+        setDbConnected(true);
+      } else {
+        // DB tamamen boşsa başlangıç verilerini yükle
+        console.log("DB Boş, başlangıç verileri yükleniyor...");
+        initialProducts.forEach(async p => {
+          await setDoc(doc(db, 'products', String(p.id)), p);
         });
+      }
+      setLoading(false);
+    }, (error) => {
+      console.error("Firestore Error:", error);
+      setProductsRaw(initialProducts);
+      setDbConnected(false);
+      setLoading(false);
+    });
 
-        setAiHistory(prev => [...prev, { 
-            role: 'model', 
-            text: response.text || 'Üzgünüm, şu an yanıt veremiyorum.',
-            links: response.candidates?.[0]?.groundingMetadata?.groundingChunks || []
-        }]);
-    } catch (e) {
-        setAiHistory(prev => [...prev, { role: 'model', text: 'AI servis bağlantı hatası.' }]);
-    } finally { setAiLoading(false); }
-  };
-
-  // Veri Yükleme (Ürünler)
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, 'products'));
-        if (!querySnapshot.empty) {
-          const dbData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: Number(doc.id) } as Product));
-          setProductsRaw(dbData.sort((a, b) => a.id - b.id));
-        } else {
-          setProductsRaw(initialProducts);
-          for (const p of initialProducts) {
-             await setDoc(doc(db, 'products', String(p.id)), p);
-          }
-        }
-      } catch (error) {
-        console.error("Firestore Ürün Yükleme Hatası:", error);
-        setProductsRaw(initialProducts);
-      } finally { setLoading(false); }
-    };
-    loadData();
+    return () => unsubscribe();
   }, []);
 
   const [selectedCategory, setSelectedCategory] = useState<string>('TÜMÜ');
@@ -186,54 +170,43 @@ const App: React.FC = () => {
     return filtered;
   }, [selectedCategory, searchTerm, productsRaw]);
 
-  // Firestore Ürün İşlemleri
+  // --- ÜRÜN İŞLEMLERİ ---
   const handleAddProduct = async (newProduct: Product) => {
       try {
-          console.log("Ürün Firestore'a ekleniyor...");
+          // ID'yi doküman adı olarak kullan
           await setDoc(doc(db, 'products', String(newProduct.id)), newProduct);
-          setProductsRaw(prev => [newProduct, ...prev]);
-          setToastMessage('Ürün başarıyla buluta kaydedildi.');
+          setToastMessage('Ürün buluta eklendi.');
       } catch (e: any) {
-          console.error("Firestore Ekleme Hatası:", e);
-          alert("Kayıt Başarısız! Lütfen Firestore kurallarınızı (Rules) kontrol edin. Hata: " + e.message);
+          alert("Ekleme hatası: " + e.message);
       }
-      setTimeout(() => setToastMessage(''), 3000);
   };
 
   const handleUpdateProduct = async (updatedProduct: Product) => {
       try {
-          await updateDoc(doc(db, 'products', String(updatedProduct.id)), updatedProduct as any);
-          setProductsRaw(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
+          // merge: true ile sadece değişen alanları güncelle, diğerlerini (EN versiyonlar gibi) koru
+          await setDoc(doc(db, 'products', String(updatedProduct.id)), updatedProduct, { merge: true });
           setToastMessage('Ürün güncellendi.');
-      } catch (e) {
-          console.error("Firestore Güncelleme Hatası:", e);
+      } catch (e: any) {
+          alert("Güncelleme hatası: " + e.message);
       }
-      setTimeout(() => setToastMessage(''), 3000);
   };
 
   const handleDeleteProduct = async (id: number) => {
       try {
           await deleteDoc(doc(db, 'products', String(id)));
-          setProductsRaw(prev => prev.filter(p => p.id !== id));
           setToastMessage('Ürün silindi.');
-      } catch (e) {
-          console.error("Firestore Silme Hatası:", e);
+      } catch (e: any) {
+          alert("Silme hatası: " + e.message);
       }
-      setTimeout(() => setToastMessage(''), 3000);
   };
 
-  // Giriş ve Kayıt İşlemleri (Bulut Tabanlı)
   const handleLoginAttempt = async (emailInput: string, passwordInput: string): Promise<boolean> => {
-      // Admin Check (Hardcoded)
       if (emailInput === 'petra' && passwordInput === '1234') {
-          const admin = { name: 'PETRA', surname: 'ADMIN', email: 'admin@petrahome.com', isAdmin: true };
-          setUser(admin);
+          setUser({ name: 'PETRA', surname: 'ADMIN', email: 'admin@petrahome.com', isAdmin: true });
           setCurrentPage('admin');
           return true;
       }
-
       try {
-          // Firestore'dan kullanıcı ara
           const userDoc = await getDoc(doc(db, 'users', emailInput.toLowerCase()));
           if (userDoc.exists()) {
               const data = userDoc.data() as DBUser;
@@ -244,34 +217,20 @@ const App: React.FC = () => {
                   return true;
               }
           }
-      } catch (e) {
-          console.error("Giriş Hatası:", e);
-      }
+      } catch (e: any) { alert(e.message); }
       return false;
   };
 
   const handleRegisterAttempt = async (newUser: User, passwordInput: string): Promise<boolean> => {
       try {
           const userRef = doc(db, 'users', newUser.email.toLowerCase());
-          const check = await getDoc(userRef);
-          if (check.exists()) return false;
-
-          const dbUser: DBUser = { 
-              ...newUser, 
-              password: passwordInput, 
-              savedFavorites: [],
-              isAdmin: false 
-          };
-          
+          const dbUser: DBUser = { ...newUser, password: passwordInput, savedFavorites: [], isAdmin: false };
           await setDoc(userRef, dbUser);
           setUser(newUser);
           setCurrentPage('list');
+          setToastMessage(t('accountCreated'));
           return true;
-      } catch (e: any) {
-          console.error("Kayıt Hatası:", e);
-          alert("Kayıt başarısız! Hata: " + e.message);
-          return false;
-      }
+      } catch (e: any) { alert(e.message); return false; }
   };
 
   const handleLogout = () => { setUser(null); setFavorites([]); setCurrentPage('list'); setToastMessage(t('loggedOut')); };
@@ -295,8 +254,8 @@ const App: React.FC = () => {
 
   if (loading) return (
     <div className="h-screen flex flex-col items-center justify-center bg-white">
-        <div className="font-bodoni text-3xl tracking-[0.3em] mb-4 animate-pulse">PETRA HOME</div>
-        <div className="text-[10px] tracking-widest text-gray-400">YÜKLENİYOR / LOADING</div>
+        <div className="font-bodoni text-3xl tracking-[0.3em] mb-4 animate-pulse uppercase">PETRA HOME</div>
+        <div className="text-[10px] tracking-widest text-gray-400 uppercase">Bulut Bağlantısı Kuruluyor...</div>
     </div>
   );
 
@@ -328,47 +287,19 @@ const App: React.FC = () => {
          currentPage === 'cart' ? <CartPage cart={cartRaw.map(i => ({ ...i, ...productsRaw.find(p => p.id === i.id) })) as CartItem[]} onBackToHome={handleBackToList} onRemoveFromCart={(id) => setCartRaw(prev => prev.filter(i => i.id !== id))} onCheckout={() => setCurrentPage('checkout')} onUpdateQuantity={(id, d) => setCartRaw(prev => prev.map(i => i.id === id ? {...i, quantity: Math.max(1, i.quantity + d)} : i))} language={language} /> :
          currentPage === 'detail' && selectedProduct ? <ProductDetail product={selectedProduct} cart={cartRaw} onClose={handleBackToList} onAddToCart={addToCart} onUpdateQuantity={() => {}} onGoToCart={handleGoToCart} language={language} /> :
          currentPage === 'account' && user ? <AccountPage user={user} onLogout={handleLogout} onBackToHome={handleBackToList} favoriteProducts={productsRaw.filter(p => favorites.includes(p.id))} onProductClick={handleProductClick} onToggleFavorite={(id) => setFavorites(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])} onAddAddress={() => {}} language={language} /> :
-         currentPage === 'admin' ? <AdminPanel products={productsRaw} categories={categories} onAddProduct={handleAddProduct} onUpdateProduct={handleUpdateProduct} onDeleteProduct={handleDeleteProduct} onAddCategory={async () => {}} onDeleteCategory={async () => {}} onBackToHome={handleBackToList} isCloudMode={true} /> :
+         currentPage === 'admin' ? <AdminPanel products={productsRaw} categories={categories} onAddProduct={handleAddProduct} onUpdateProduct={handleUpdateProduct} onDeleteProduct={handleDeleteProduct} onAddCategory={async () => {}} onDeleteCategory={async () => {}} onBackToHome={handleBackToList} isCloudMode={dbConnected} /> :
          currentPage === 'checkout' ? <CheckoutPage cart={cartRaw} subtotal={cartRaw.reduce((s,i) => s + (i.price*i.quantity), 0)} onBackToCart={() => setCurrentPage('cart')} onPaymentSuccess={() => { setToastMessage('Sipariş Alındı'); handleGoHome(); setCartRaw([]); }} language={language} /> :
          <>
-            <h2 className="text-3xl font-light uppercase tracking-[0.2em] mb-8">{getCategoryName(selectedCategory)}</h2>
+            <div className="flex justify-between items-center mb-8">
+                <h2 className="text-3xl font-light uppercase tracking-[0.2em]">{getCategoryName(selectedCategory)}</h2>
+                {!dbConnected && <div className="text-[10px] text-red-500 font-bold uppercase tracking-widest animate-pulse">Bulut Bağlantısı Yok</div>}
+            </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                 {filteredProducts.map(p => <ProductCard key={p.id} product={p} onProductClick={handleProductClick} viewMode={viewMode} isFavorite={favorites.includes(p.id)} onToggleFavorite={(id) => setFavorites(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])} language={language} />)}
             </div>
          </>
         }
       </main>
-
-      <button onClick={() => setIsAiOpen(!isAiOpen)} className="fixed bottom-24 right-8 w-14 h-14 bg-black text-white rounded-full shadow-2xl flex items-center justify-center z-50 hover:scale-110 active:scale-95 transition-all duration-300">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/></svg>
-      </button>
-
-      {isAiOpen && (
-        <div className="fixed bottom-40 right-8 w-80 h-[450px] bg-white shadow-2xl rounded-lg border border-black/5 flex flex-col z-50 animate-fade-in overflow-hidden">
-            <div className="bg-black text-white p-4 flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
-                <span>Petra AI Interior Assistant</span>
-                <button onClick={() => setIsAiOpen(false)} className="text-lg">&times;</button>
-            </div>
-            <div className="flex-grow overflow-y-auto p-4 space-y-4 custom-scrollbar bg-gray-50/30">
-                {aiHistory.length === 0 && (
-                    <p className="text-[10px] text-gray-400 text-center mt-10 uppercase tracking-widest">Size bugün dekorasyon konusunda nasıl yardımcı olabilirim?</p>
-                )}
-                {aiHistory.map((m, i) => (
-                    <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[85%] p-3 rounded-sm text-[11px] leading-relaxed ${m.role === 'user' ? 'bg-black text-white font-light' : 'bg-white border border-black/5 text-gray-800'}`}>
-                            {m.text}
-                        </div>
-                    </div>
-                ))}
-                {aiLoading && <div className="text-[9px] text-gray-400 animate-pulse tracking-widest uppercase">{t('aiThinking')}</div>}
-                <div ref={chatEndRef} />
-            </div>
-            <div className="p-4 border-t border-black/5 bg-white flex gap-2">
-                <input value={aiInput} onChange={e => setAiInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAskAi()} placeholder={t('aiPlaceholder')} className="flex-grow border-b border-black/10 outline-none text-[11px] pb-1 bg-transparent focus:border-black transition-colors" />
-                <button onClick={handleAskAi} className="bg-black text-white px-4 py-1 text-[10px] uppercase font-bold tracking-widest hover:bg-gray-800 transition-colors">-></button>
-            </div>
-        </div>
-      )}
 
       <div className="fixed bottom-8 left-0 w-full h-10 bg-white/95 border-t border-black/5 flex justify-between items-center px-8 text-[10px] uppercase tracking-[0.2em] z-40 font-bold">
           <button onClick={handleGoHome} className="hover:opacity-50 transition-opacity">PETRA HOME © 2025</button>
