@@ -2,19 +2,19 @@
 export interface Product {
     id: number;
     name: string;
-    name_en?: string; // İngilizce Adı
+    name_en?: string;
     category: string;
-    category_en?: string; // İngilizce Kategorisi
+    category_en?: string;
     price: number;
     imageMain: string;
     imageHover: string;
     imageDetail2: string;
     imageDetail3: string;
     description: string;
-    description_en?: string; // İngilizce Açıklama
+    description_en?: string;
     features: string[];
-    features_en?: string[]; // İngilizce Özellikler
-    shopierLink?: string; // Shopier Ödeme Linki
+    features_en?: string[];
+    shopierLink?: string;
 }
 
 export interface CartItem extends Product {
@@ -37,10 +37,9 @@ export interface User {
 }
 
 export type ViewMode = 'grid' | 'compact';
-export type PageType = 'list' | 'detail' | 'cart' | 'login' | 'account' | 'admin' | 'help' | 'about';
+export type PageType = 'list' | 'detail' | 'cart' | 'login' | 'account' | 'admin' | 'help' | 'about' | 'checkout';
 export type Language = 'tr' | 'en';
 
-// Helper types for Props
 export interface ProductCardProps {
     product: Product;
     onProductClick: (product: Product) => void;
@@ -74,12 +73,13 @@ export interface AccountPageProps {
 export interface AdminPanelProps {
     products: Product[];
     categories: string[];
-    onAddProduct: (product: Product) => void;
-    onUpdateProduct: (product: Product) => void;
-    onDeleteProduct: (id: number) => void;
-    onAddCategory: (category: string) => void;
-    onDeleteCategory: (category: string) => void;
+    onAddProduct: (product: Product) => Promise<void>;
+    onUpdateProduct: (product: Product) => Promise<void>;
+    onDeleteProduct: (id: number) => Promise<void>;
+    onAddCategory: (category: string) => Promise<void>;
+    onDeleteCategory: (category: string) => Promise<void>;
     onBackToHome: () => void;
+    isCloudMode: boolean;
 }
 
 export interface CartPageProps {
@@ -106,8 +106,8 @@ export interface MenuSidebarProps {
 
 export interface LoginPageProps {
     onBackToHome: () => void;
-    onLoginAttempt: (email: string, password: string) => boolean;
-    onRegisterAttempt: (user: User, password: string) => boolean;
+    onLoginAttempt: (email: string, password: string) => Promise<boolean>;
+    onRegisterAttempt: (user: User, password: string) => Promise<boolean>;
     language: Language; 
 }
 
@@ -119,5 +119,13 @@ export interface HelpPageProps {
 
 export interface AboutPageProps {
     onBackToHome: () => void;
+    language: Language;
+}
+
+export interface CheckoutPageProps {
+    cart: CartItem[];
+    subtotal: number;
+    onBackToCart: () => void;
+    onPaymentSuccess: () => void;
     language: Language;
 }

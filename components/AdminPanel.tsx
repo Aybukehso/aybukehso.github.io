@@ -10,7 +10,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     onDeleteProduct,
     onAddCategory,
     onDeleteCategory,
-    onBackToHome
+    onBackToHome,
+    isCloudMode // Eksik olan prop eklendi
 }) => {
     const [editingId, setEditingId] = useState<number | null>(null);
     const [newCategory, setNewCategory] = useState('');
@@ -70,7 +71,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
             if (editingId) await onUpdateProduct(p); else await onAddProduct(p);
             reset();
         } catch (err) {
-            console.error(err);
+            console.error("Kayıt hatası:", err);
         } finally {
             setIsSaving(false);
         }
@@ -81,7 +82,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
             <div className="flex justify-between items-end mb-12 border-b border-black/5 pb-8">
                 <div>
                     <h1 className="text-3xl font-light uppercase tracking-[0.2em] text-black">YÖNETİM PANELİ</h1>
-                    <p className="text-[10px] text-gray-400 mt-2 uppercase tracking-widest">Mağaza ve Envanter Yönetimi (Firestore Aktif)</p>
+                    <p className="text-[10px] text-gray-400 mt-2 uppercase tracking-widest">
+                        {isCloudMode ? 'BULUT MODU AKTİF (FIRESTORE)' : 'YEREL MOD'}
+                    </p>
                 </div>
                 <button onClick={onBackToHome} className="text-[10px] font-bold border border-black px-8 py-3 hover:bg-black hover:text-white transition-all uppercase tracking-widest">Mağazaya Dön</button>
             </div>
