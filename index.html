@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petra Home</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel (JSX'i tarayıcıda çalıştırmak için) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;500;600&family=Inter:wght@200;300;400;500;600&display=swap');
+      
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: white;
+        color: black;
+        -webkit-font-smoothing: antialiased;
+      }
+      
+      .font-bodoni {
+        font-family: 'Bodoni Moda', serif;
+      }
+
+      /* Animasyonlar */
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .animate-fade-in {
+        animation: fadeIn 0.5s ease-out forwards;
+      }
+      
+      /* Scrollbar Gizleme */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #ccc; 
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #999; 
+      }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // --- DATA SECTION ---
+        const initialProducts = [
+          {
+            id: 7,
+            name: 'STONE CURVE MASA LAMBASI',
+            name_en: 'STONE CURVE TABLE LAMP',
+            category: 'AYDINLATMA',
+            category_en: 'LIGHTING',
+            price: 7999.00, 
+            imageMain: 'https://raw.githubusercontent.com/Aybukehso/petra-images/main/ayd%C4%B1nlatma.JPG',
+            imageHover: 'https://raw.githubusercontent.com/Aybukehso/petra-images/main/ayd%C4%B1nlatma%202.JPG',
+            description: 'Stone Curve Masa Lambası, heykelsi formu ve yumuşak ışık dağılımıyla mekâna sakin bir atmosfer kazandırır. Doğal dokusu ve kavisli yapısı, Japandi ve minimal interior stillsle kusursuz uyum sağlar.',
+            description_en: 'Stone Curve Table Lamp brings a calm atmosphere to the space with its sculptural form and soft light distribution. Its natural texture and curved structure blend perfectly with Japandi and minimal interior styles.',
+            features: ['Malzeme: Taş dokulu gövde', 'Işık Tipi: Sıcak beyaz', 'Kullanım Alanı: İç mekân', 'Stil: Minimal / Japandi', 'Elektrik: Kablolu kullanım'],
+            features_en: ['Material: Stone textured body', 'Light Type: Warm white', 'Usage: Indoor', 'Style: Minimal / Japandi', 'Power: Corded']
+          },
+          {
+            id: 8,
+            name: 'WABI DARK KASE',
+            name_en: 'WABI DARK BOWL',
+            category: 'DEKORATİF AKSESUAR',
+            category_en: 'DECORATION',
+            price: 3449.00,
+            imageMain: 'https://raw.githubusercontent.com/Aybukehso/petra-images/main/kase%201.JPG',
+            imageHover: 'https://raw.githubusercontent.com/Aybukehso/petra-images/main/kase%202.JPG',
+            description: 'Wabi Dark Kase, düzensiz kenarları ve koyu yüzeyiyle wabi-sabi estetiğini yansıtır. Minimal ama karakterli duruşu sayesinde tek başına veya farklı objelerle birlikte dekoratif olarak kullanılabilir.',
+            description_en: 'Wabi Dark Bowl reflects wabi-sabi aesthetics with its irregular edges and dark surface. With its minimal yet characteristic stance, it can be used decoratively alone or with other objects.',
+            features: ['Malzeme: Kağıt Hamuru', 'Yüzey: Parlak sır', 'Çap: 28 cm', 'Kullanım: Sadece dekoratif amaçlı'],
+            features_en: ['Material: Paper Pulp', 'Surface: Glossy glaze', 'Diameter: 28 cm', 'Usage: Decorative purpose only']
+          },
+          {
+            id: 9, 
+            name: 'DOKULU DUVAR TABLOSU',
+            name_en: 'TEXTURED WALL ART',
+            category: 'TABLO',
+            category_en: 'ARTWORKS',
+            price: 7899.00,
+            imageMain: 'https://raw.githubusercontent.com/Aybukehso/petra-images/main/tablo%202.JPG', 
+            imageHover: 'https://raw.githubusercontent.com/Aybukehso/petra-images/main/tablo%203.JPG', 
+            description: 'Dokulu Duvar Tablosu, doğal malzeme hissi veren yüzeyi ve sakin renk paletiyle mekânda sanatsal bir denge oluşturur. Işıkla birlikte değişen dokusu, duvarlarda derinlik hissi yaratır.',
+            description_en: 'Textured Wall Art creates an artistic balance in the space with its surface giving a natural material feel and calm color palette. Its texture changing with light creates a sense of depth on the walls.',
+            features: ['Stil: Dokulu / Sanatsal', 'Kullanım: Duvara asılabilir', 'Etki: Işıkla değişen yüzey dokusu', 'Kullanım Alanı: İç mekân'],
+            features_en: ['Style: Textured / Artistic', 'Usage: Wall mountable', 'Effect: Surface texture changing with light', 'Usage Area: Indoor']
+          },
+          {
+            id: 3,
+            name: 'TERRA SILENCE SERAMİK VAZO SETİ (2’Lİ)',
+            name_en: 'TERRA SILENCE CERAMIC VASE SET (SET OF 2)',
+            category: 'DEKORATİF AKSESUAR',
+            category_en: 'DECORATION',
+            price: 2950.00,
+            imageMain: 'https://raw.githubusercontent.com/Aybukehso/petra-images/main/vazo%201.JPG', 
+            imageHover: 'https://raw.githubusercontent.com/Aybukehso/petra-images/main/vazo%202.JPG',
+            description: 'Terra Silence Vazo Seti taş tozu karışımıyla elde şekillendirilmiş, her biri benzersiz iki dekoratif vazodan oluşur. Yüzeydeki doğal geçişler ve kusurlu güzellik anlayışı, wabi-sabi felsefesini yansıtır.',
+            description_en: 'Terra Silence Vase Set consists of two unique decorative vases shaped by hand with stone powder mixture. Natural transitions on the surface and imperfect beauty concept reflect wabi-sabi philosophy.',
+            features: ['Malzeme: Taş tozu', 'Üretim: El yapımı', 'Set İçeriği: 2 adet vazo', 'Stil: Wabi-sabi / Organik', 'UYARI: Su ile temas ettirilmemelidir'],
+            features_en: ['Material: Stone powder', 'Production: Handmade', 'Set Content: 2 vases', 'Style: Wabi-sabi / Organic', 'WARNING: Do not contact with water']
+          },
+          {
+            id: 2,
+            name: 'WABI EARTH KASE',
+            name_en: 'WABI EARTH BOWL',
+            category: 'DEKORATİF AKSESUAR',
+            category_en: 'DECORATION',
+            price: 2999.00,
+            imageMain: 'https://raw.githubusercontent.com/Aybukehso/petra-images/main/wabi%20earth%20kase.png',
+            imageHover: 'https://raw.githubusercontent.com/Aybukehso/petra-images/main/wabi%20sabi%20kase%202.JPG',
+            description: 'Wabi Earth Kase, kağıt hamuru kullanılarak elde şekillendirilmiş, ayaklı formuyla güçlü bir duruş sergiler. Doğal yüzey dokusu ve organik renk geçişleri, onu dekoratif bir sanat objesine dönüştürür.',
+            description_en: 'Wabi Earth Bowl displays a strong stance with its footed form shaped by hand using paper pulp. Natural surface texture and organic color transitions transform it into a decorative art object.',
+            features: ['Malzeme: Kağıt hamuru', 'Üretim: El yapımı', 'Form: Ayaklı kase', 'Stil: Wabi-sabi', 'UYARI: Gıda ile temasa uygun değildir'],
+            features_en: ['Material: Paper pulp', 'Production: Handmade', 'Form: Footed bowl', 'Style: Wabi-sabi', 'WARNING: Not suitable for food contact']
+          },
+          {
+            id: 4,
+            name: 'PURE LINE UZUN BOY AYNA',
+            name_en: 'PURE LINE FLOOR MIRROR',
+            category: 'AYNA',
+            category_en: 'MIRRORS',
+            price: 2850.00,
+            imageMain: 'https://raw.githubusercontent.com/Aybukehso/petra-images/main/ayna.png', 
+            imageHover: 'https://raw.githubusercontent.com/Aybukehso/petra-images/main/ayna%202.png',
+            description: 'Pure Line Uzun Boy Ayna, ince çerçevesi ve sade formuyla mekânı daha ferah ve aydınlık gösterir. Minimal tasarımı sayesinde farklı dekorasyon stilleriyle kolayca uyum sağlar.',
+            description_en: 'Pure Line Floor Mirror makes the space look more spacious and bright with its thin frame and simple form. Thanks to its minimal design, it easily adapts to different decoration styles.',
+            features: ['Form: Uzun boy', 'Stil: Minimal', 'Kullanım: İç mekân', 'Çerçeve: İnce metal'],
+            features_en: ['Form: Full length', 'Style: Minimal', 'Usage: Indoor', 'Frame: Thin metal']
+          },
+          {
+            id: 5,
+            name: 'NOIR CALM DOĞAL MUM',
+            name_en: 'NOIR CALM NATURAL CANDLE',
+            category: 'MUM VE ODA KOKUSU',
+            category_en: 'FRAGRANCES',
+            price: 599.00,
+            imageMain: 'https://raw.githubusercontent.com/Aybukehso/petra-images/main/mum%20main.png', 
+            imageHover: 'https://raw.githubusercontent.com/Aybukehso/petra-images/main/mum.png', 
+            description: 'Noir Calm Doğal Mum, sade tasarımı ve yumuşak aleviyle mekânda huzurlu bir atmosfer yaratır. Tek başına veya set ürünleriyle birlikte kullanılabilir.',
+            description_en: 'Noir Calm Natural Candle creates a peaceful atmosphere in the space with its simple design and soft flame. Can be used alone or with set products.',
+            features: ['Kullanım: İç mekân', 'Stil: Minimal', 'Ambalaj: Mat siyah cam'],
+            features_en: ['Usage: Indoor', 'Style: Minimal', 'Packaging: Matte black glass']
+          },
+          {
+            id: 6,
+            name: 'NOIR CALM MUM SETİ (3’LÜ)',
+            name_en: 'NOIR CALM CANDLE SET (SET OF 3)',
+            category: 'MUM VE ODA KOKUSU',
+            category_en: 'FRAGRANCES',
+            price: 749.00,
+            imageMain: 'https://raw.githubusercontent.com/Aybukehso/petra-images/main/mum%20seti.png',
+            imageHover: 'https://raw.githubusercontent.com/Aybukehso/petra-images/main/mum%20seti.png',
+            description: 'Noir Calm Mum Seti, farklı boyutlardaki üç parçadan oluşur. Birlikte kullanıldığında dengeli ve sofistike bir dekoratif görünüm sunar.',
+            description_en: 'Noir Calm Candle Set consists of three pieces in different sizes. When used together, it offers a balanced and sophisticated decorative look.',
+            features: ['Set İçeriği: 3 adet mum', 'Stil: Minimal', 'Kullanım: Dekoratif & ambiyans'],
+            features_en: ['Set Content: 3 candles', 'Style: Minimal', 'Usage: Decorative & ambiance']
+          },
+          {
+            id: 1,
+            name: 'LINEN CALM JÜT HALI',
+            name_en: 'LINEN CALM JUTE RUG',
+            category: 'HALI',
+            category_en: 'RUGS',
+            price: 4899.00,
+            imageMain: 'https://raw.githubusercontent.com/Aybukehso/petra-images/main/hal%C4%B1.png', 
+            imageHover: 'https://raw.githubusercontent.com/Aybukehso/petra-images/main/hal%C4%B1%202.png', 
+            description: 'Linen Calm Jüt Halı, doğal lif dokusu ve yumuşak renk tonlarıyla yaşam alanlarında sade bir denge oluşturur. Zamansız tasarımı sayesinde salon, çalışma alanı ve yatak odalarında rahatlıkla kullanılabilir.',
+            description_en: 'Linen Calm Jute Rug creates a simple balance in living spaces with its natural fiber texture and soft color tones. Thanks to its timeless design, it can be easily used in the living room, workspace, and bedroom.',
+            features: ['Malzeme: Jüt', 'Dokuma: Düz dokuma', 'Renk: Doğal krem tonları', 'Stil: Minimal / Doğal', 'Kullanım: İç mekân'],
+            features_en: ['Material: Jute', 'Weave: Flat weave', 'Color: Natural cream tones', 'Style: Minimal / Natural', 'Usage: Indoor']
+          },
+        ];
+
+        // --- COMPONENTS SECTION ---
+        
+        const { useState, useEffect, useMemo } = React;
+
+        // 1. Toast Notification
+        const ToastNotification = ({ message, isVisible, actionLabel, onAction }) => {
+            return (
+                <div className={`fixed bottom-5 right-5 z-50 transition-all duration-300 transform ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}`}>
+                    <div className="bg-black text-white px-6 py-4 rounded-sm shadow-2xl flex items-center justify-between min-w-[300px] max-w-md">
+                        <span className="text-sm tracking-wide font-medium mr-4">{message}</span>
+                        {actionLabel && onAction && (
+                            <button 
+                                onClick={onAction}
+                                className="text-xs font-bold uppercase tracking-widest border-b border-white pb-0.5 hover:opacity-70 transition-opacity whitespace-nowrap"
+                            >
+                                {actionLabel}
+                            </button>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        // 2. WhatsApp Button (GÜNCELLENDİ: bottom-24 yapıldı)
+        const WhatsAppButton = () => {
+            const phoneNumber = '905056862502';
+            const message = encodeURIComponent('Merhaba, Petra Home ürünleri hakkında bilgi almak istiyorum.');
+            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+
+            return (
+                <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="fixed bottom-24 right-8 z-40 flex items-center justify-center w-12 h-12 bg-black text-white rounded-full shadow-lg opacity-80 hover:opacity-100 transition-opacity duration-300">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" className="w-6 h-6">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.008-.57-.008-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                    </svg>
+                </a>
+            );
+        };
+
+        // 3. Product Card
+        const ProductCard = ({ product, onProductClick, viewMode, isFavorite, onToggleFavorite, language }) => {
+            const [isHovered, setIsHovered] = useState(false);
+            const isGrid = viewMode === 'grid';
+            const imageAspectClass = isGrid ? 'aspect-[4/5] md:aspect-[4/6]' : 'aspect-[4/4.5]';
+            const textPaddingClass = isGrid ? 'pt-3 pb-6' : 'pt-2 pb-4';
+            const nameSizeClass = isGrid ? 'text-sm' : 'text-xs';
+            const priceSizeClass = isGrid ? 'text-sm' : 'text-xs';
+
+            const formattedPrice = product.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            return (
+                <div 
+                    className="group flex flex-col cursor-pointer transition-opacity duration-300 hover:opacity-95"
+                    onMouseEnter={() => setIsHovered(true)}
+                    onMouseLeave={() => setIsHovered(false)}
+                    onClick={() => onProductClick(product)}
+                >
+                    <div className={`relative overflow-hidden bg-gray-100 ${imageAspectClass}`}>
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); onToggleFavorite(product.id); }}
+                            className="absolute top-3 right-3 z-10 p-2 rounded-full hover:scale-110 transition-transform"
+                        >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill={isFavorite ? "black" : "none"} stroke={isFavorite ? "black" : "white"} strokeWidth={isFavorite ? "0" : "1.5"} className="drop-shadow-sm">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                            </svg>
+                        </button>
+                        <img src={isHovered ? product.imageHover : product.imageMain} alt={product.name} className="w-full h-full object-cover transition-opacity duration-150 ease-linear" loading="lazy" />
+                    </div>
+                    <div className={textPaddingClass}>
+                        {isGrid && <p className="text-xs tracking-widest text-gray-700 font-sans">{product.category}</p>}
+                        <p className={`${nameSizeClass} font-semibold uppercase text-black mt-1`}>{product.name}</p>
+                        <p className={`${priceSizeClass} text-black mt-1 font-sans`}>{formattedPrice} TL</p>
+                    </div>
+                </div>
+            );
+        };
+
+        // 4. Menu Sidebar
+        const MenuSidebar = ({ isOpen, onClose, categories, selectedCategory, onSelectCategory, onLoginClick, onHelpClick, onAboutClick, user, language }) => {
+            const menuFontClass = 'font-sans text-xs tracking-widest uppercase text-white hover:text-gray-400 transition-colors block py-3 px-6 cursor-pointer text-left w-full';
+            const getCategoryName = (cat) => {
+                if (language !== 'en') return cat;
+                const translations = { 'TÜMÜ': 'ALL', 'AYNA': 'MIRRORS', 'AYDINLATMA': 'LIGHTING', 'DEKORATİF AKSESUAR': 'DECORATION', 'TABLO': 'ARTWORKS', 'MUM VE ODA KOKUSU': 'FRAGRANCES', 'HALI': 'RUGS' };
+                return translations[cat] || cat;
+            };
+            const t = (tr, en) => language === 'tr' ? tr : en;
+
+            return (
+                <>
+                    <div className={`fixed inset-0 bg-black/50 z-30 transition-opacity duration-300 ${isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`} onClick={onClose} />
+                    <div className={`fixed top-0 left-0 h-full w-64 bg-black text-white z-40 transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                        <div className="flex justify-between items-center h-16 border-b border-gray-800 px-6">
+                            <h2 className="text-lg font-semibold tracking-widest uppercase">{t('MENÜ', 'MENU')}</h2>
+                            <button onClick={onClose} className="text-white text-2xl hover:text-gray-400 transition-colors">&times;</button>
+                        </div>
+                        <nav className="pt-4 flex flex-col items-start">
+                            {categories.map(cat => (
+                                <button key={cat} onClick={() => { onSelectCategory(cat); onClose(); }} className={`${menuFontClass} ${selectedCategory === cat ? 'font-bold bg-gray-900' : 'font-light'}`}>
+                                    {getCategoryName(cat)}
+                                </button>
+                            ))}
+                            <div className="h-px bg-gray-800 my-4 mx-6 w-[calc(100%-3rem)]"></div>
+                            <button className={`${menuFontClass} opacity-60`} onClick={() => { onAboutClick(); onClose(); }}>{t('HAKKIMIZDA', 'ABOUT US')}</button>
+                            <button className={`${menuFontClass} opacity-60`} onClick={() => { onHelpClick(); onClose(); }}>{t('YARDIM', 'HELP')}</button>
+                            <button className={`${menuFontClass} opacity-60`} onClick={() => { onLoginClick(); onClose(); }}>{user ? `${t('HESABIM', 'ACCOUNT')} (${user.name})` : t('GİRİŞ YAP', 'LOG IN')}</button>
+                        </nav>
+                    </div>
+                </>
+            );
+        };
+
+        // 5. Product Detail
+        const ProductDetail = ({ product, cart, onClose, onAddToCart, onGoToCart, language }) => {
+            const t = (tr, en) => language === 'tr' ? tr : en;
+            const features = product.features || [t('Özellikler henüz girilmemiştir.', 'Features not yet available.')];
+            const description = product.description || t('Bu ürünle ilgili detaylı açıklama yakında eklenecektir.', 'Detailed description coming soon.');
+            const isInCart = cart.some(item => item.id === product.id);
+            const formattedPrice = product.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            return (
+                <div className="py-10 animate-fade-in">
+                    <button onClick={onClose} className="text-lg font-semibold uppercase mb-6 flex items-center hover:opacity-70 transition-opacity">
+                        <span className="text-2xl mr-2">&larr;</span> {t('GERİ', 'BACK')}
+                    </button>
+                    <div className="flex flex-col md:flex-row gap-10">
+                        <div className="md:w-3/5 space-y-4">
+                            {[product.imageMain, product.imageHover].map((src, index) => (
+                                <img key={index} src={src} className={`w-full h-auto object-cover border border-gray-100 ${index > 0 ? 'aspect-[4/5] md:aspect-[4/5]' : 'aspect-auto'}`} />
+                            ))}
+                        </div>
+                        <div className="md:w-2/5 p-0 md:p-4 sticky top-20 h-full self-start">
+                            <p className="text-sm tracking-widest text-gray-700">{product.category}</p>
+                            <h1 className="text-3xl md:text-4xl font-light uppercase text-black mt-2">{product.name}</h1>
+                            <p className="text-xl font-semibold text-black mt-4">{formattedPrice} TL</p>
+                            <div className="mt-8 space-y-3">
+                                {isInCart ? (
+                                    <button onClick={onGoToCart} className="w-full bg-black text-white py-3 uppercase tracking-widest text-sm font-semibold hover:bg-gray-800 transition-colors border border-black">{t('SEPETİ GÖR', 'VIEW BAG')}</button>
+                                ) : (
+                                    <button onClick={() => onAddToCart(product)} className="w-full bg-black text-white py-3 uppercase tracking-widest text-sm font-semibold hover:bg-gray-800 transition-colors">{t('EKLE', 'ADD')}</button>
+                                )}
+                                <p className="text-xs text-gray-600 text-center md:text-left">{t('Teslimat Süresi: 3-5 İş Günü', 'Delivery: 3-5 Business Days')}</p>
+                            </div>
+                            <div className="mt-10 space-y-6 border-t border-gray-200 pt-6">
+                                <div className="pb-4">
+                                    <h3 className="text-lg font-semibold uppercase border-b border-black/50 pb-2 mb-3">{t('AÇIKLAMA', 'DESCRIPTION')}</h3>
+                                    <p className="text-sm text-gray-700 leading-relaxed">{description}</p>
+                                </div>
+                                <div className="pb-4">
+                                    <h3 className="text-lg font-semibold uppercase border-b border-black/50 pb-2 mb-3">{t('ÖZELLİKLER', 'FEATURES')}</h3>
+                                    <ul className="text-sm text-gray-700 list-disc pl-5 space-y-1">
+                                        {features.map((feature, index) => <li key={index}>{feature}</li>)}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // 6. Cart Page
+        const CartPage = ({ cart, onBackToHome, onRemoveFromCart, onCheckout, onUpdateQuantity, language }) => {
+            const t = (tr, en) => language === 'tr' ? tr : en;
+            const subtotal = useMemo(() => cart.reduce((total, item) => total + (item.price * item.quantity), 0), [cart]);
+            const formatPrice = (price) => price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            return (
+                <div className="py-10 animate-fade-in">
+                    <button onClick={onBackToHome} className="text-lg font-semibold uppercase mb-8 flex items-center hover:opacity-70 transition-opacity">
+                        <span className="text-2xl mr-2">&larr;</span> {t('ALIŞVERİŞE DEVAM ET', 'CONTINUE SHOPPING')}
+                    </button>
+                    <h1 className="text-lg font-normal uppercase tracking-widest text-black mb-10 border-b border-black/10 pb-4">{t('Sepet', 'Bag')} [{cart.length}]</h1>
+                    {cart.length === 0 ? (
+                        <div className="text-center py-20 border border-gray-100 p-8">
+                            <p className="text-lg text-gray-600">{t('Sepetinizde henüz ürün bulunmamaktadır.', 'Your bag is empty.')}</p>
+                            <button onClick={onBackToHome} className="mt-6 bg-black text-white py-3 px-8 uppercase tracking-widest text-sm font-semibold hover:bg-gray-800 transition-colors">{t('KOLEKSİYONU KEŞFET', 'DISCOVER COLLECTION')}</button>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col md:flex-row gap-12">
+                            <div className="md:w-2/3 space-y-8">
+                                {cart.map(item => (
+                                    <div key={item.id} className="flex gap-6 border-b border-gray-100 pb-8">
+                                        <div className="w-24 md:w-32 aspect-[3/4] flex-shrink-0"><img src={item.imageMain} className="w-full h-full object-cover" /></div>
+                                        <div className="flex-grow flex flex-col justify-between py-1">
+                                            <div>
+                                                <div className="flex justify-between items-start">
+                                                    <p className="text-sm font-medium uppercase text-black leading-tight max-w-[70%]">{item.name}</p>
+                                                    <p className="text-sm font-medium text-black">{formatPrice(item.price * item.quantity)} TL</p>
+                                                </div>
+                                                <p className="text-xs text-gray-500 mt-1 uppercase tracking-wider">{item.category}</p>
+                                            </div>
+                                            <div className="flex justify-between items-end mt-4">
+                                                <div className="flex items-center space-x-4">
+                                                    <button onClick={() => item.quantity > 1 && onUpdateQuantity(item.id, -1)} disabled={item.quantity <= 1} className={`text-lg font-light w-6 h-6 flex items-center justify-center ${item.quantity <= 1 ? 'opacity-30 cursor-not-allowed' : 'hover:text-gray-500'}`}>-</button>
+                                                    <span className="text-sm font-light w-4 text-center">{item.quantity}</span>
+                                                    <button onClick={() => onUpdateQuantity(item.id, 1)} className="text-lg font-light w-6 h-6 flex items-center justify-center hover:text-gray-500">+</button>
+                                                </div>
+                                                <button onClick={() => onRemoveFromCart(item.id)} className="text-xs text-gray-500 border-b border-gray-300 pb-0.5 hover:text-black hover:border-black uppercase tracking-wider">{t('KALDIR', 'REMOVE')}</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="md:w-1/3 pt-4 md:pt-0">
+                                <div className="bg-gray-50 p-8 sticky top-24">
+                                    <h3 className="text-sm font-bold uppercase tracking-widest mb-6">{t('SİPARİŞ ÖZETİ', 'ORDER SUMMARY')}</h3>
+                                    <div className="flex justify-between text-base font-bold text-black mb-8"><span>{t('TOPLAM', 'TOTAL')}</span><span>{formatPrice(subtotal)} TL</span></div>
+                                    <button onClick={onCheckout} className="w-full bg-black text-white py-4 uppercase tracking-widest text-xs font-bold hover:bg-gray-800 transition-colors">{t('ÖDEMEYİ TAMAMLA', 'CHECKOUT')}</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // 7. Login Page
+        const LoginPage = ({ onBackToHome, onLoginAttempt, onRegisterAttempt, language }) => {
+            const t = (tr, en) => language === 'tr' ? tr : en;
+            const [activeTab, setActiveTab] = useState('LOGIN'); // Default tab changed to LOGIN
+            const [error, setError] = useState('');
+            const [email, setEmail] = useState('');
+            const [password, setPassword] = useState('');
+            const [name, setName] = useState('');
+            const [surname, setSurname] = useState('');
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                setError('');
+                setTimeout(() => {
+                    if (activeTab === 'REGISTER') {
+                        if (!onRegisterAttempt({ name: name.trim().toUpperCase(), surname: surname.trim().toUpperCase(), email: email.trim() }, password)) setError(t('Bu e-posta adresi ile daha önce kayıt olunmuş.', 'Email already registered.'));
+                    } else {
+                        if (!onLoginAttempt(email.trim(), password)) setError(t('E-posta adresi veya parola hatalı.', 'Invalid email or password.'));
+                    }
+                }, 300);
+            };
+
+            return (
+                <div className="py-10 animate-fade-in max-w-lg mx-auto min-h-[60vh]">
+                    <button onClick={onBackToHome} className="text-lg font-semibold uppercase mb-12 flex items-center hover:opacity-70 transition-opacity"><span className="text-2xl mr-2">&larr;</span> {t('GERİ', 'BACK')}</button>
+                    <div className="flex flex-col items-center">
+                        <div className="flex space-x-8 mb-12">
+                            {/* Tabs Reordered: LOGIN first */}
+                            {['LOGIN', 'REGISTER'].map(tab => (
+                                <button key={tab} onClick={() => { setActiveTab(tab); setError(''); }} className={`text-sm tracking-widest uppercase pb-2 border-b transition-colors ${activeTab === tab ? 'border-black text-black' : 'border-transparent text-gray-400 hover:text-black'}`}>{tab === 'REGISTER' ? t('KAYDOL', 'REGISTER') : t('OTURUM AÇ', 'LOG IN')}</button>
+                            ))}
+                        </div>
+                        {error && <div className="w-full bg-red-50 border border-red-100 text-red-600 px-4 py-3 mb-6 text-xs uppercase tracking-wide">{error}</div>}
+                        <form onSubmit={handleSubmit} className="w-full space-y-8">
+                            <div className="space-y-6">
+                                <input type="text" placeholder={t('E-POSTA', 'EMAIL')} required value={email} onChange={e => setEmail(e.target.value)} className="w-full border-b border-gray-300 py-3 text-sm focus:outline-none focus:border-black transition-colors placeholder-gray-500 tracking-wide bg-transparent" />
+                                <input type="password" placeholder={t('PAROLA', 'PASSWORD')} required value={password} onChange={e => setPassword(e.target.value)} className="w-full border-b border-gray-300 py-3 text-sm focus:outline-none focus:border-black transition-colors placeholder-gray-500 tracking-wide bg-transparent" />
+                                {activeTab === 'REGISTER' && (
+                                    <>
+                                        <input type="text" placeholder={t('AD', 'NAME')} required value={name} onChange={e => setName(e.target.value)} className="w-full border-b border-gray-300 py-3 text-sm focus:outline-none focus:border-black transition-colors placeholder-gray-500 tracking-wide bg-transparent" />
+                                        <input type="text" placeholder={t('SOYAD', 'SURNAME')} required value={surname} onChange={e => setSurname(e.target.value)} className="w-full border-b border-gray-300 py-3 text-sm focus:outline-none focus:border-black transition-colors placeholder-gray-500 tracking-wide bg-transparent" />
+                                    </>
+                                )}
+                            </div>
+                            <button type="submit" className="w-full bg-black text-white py-4 uppercase tracking-widest text-sm font-semibold hover:bg-gray-800 transition-colors mt-8">{activeTab === 'LOGIN' ? t('OTURUM AÇ', 'LOG IN') : t('HESAP OLUŞTUR', 'CREATE ACCOUNT')}</button>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        // 8. Account Page
+        const AccountPage = ({ user, onLogout, onBackToHome, favoriteProducts, onProductClick, onToggleFavorite, onAddAddress, language }) => {
+            const t = (tr, en) => language === 'tr' ? tr : en;
+            const [activeSection, setActiveSection] = useState('PROFILE');
+            const [showAddressForm, setShowAddressForm] = useState(false);
+            const [addressForm, setAddressForm] = useState({ title: '', fullAddress: '', city: '' });
+
+            const handleSaveAddress = (e) => {
+                e.preventDefault();
+                onAddAddress({ id: Date.now().toString(), title: addressForm.title.toUpperCase(), fullAddress: addressForm.fullAddress, city: addressForm.city.toUpperCase() });
+                setAddressForm({ title: '', fullAddress: '', city: '' });
+                setShowAddressForm(false);
+            };
+
+            const renderContent = () => {
+                if (activeSection === 'ORDERS') return <div className="border border-gray-100 p-8 text-center text-gray-500 text-sm">{t('Henüz bir siparişiniz bulunmamaktadır.', 'You have no orders yet.')}</div>;
+                if (activeSection === 'FAVORITES') return (
+                    <div className="space-y-6">
+                        <h2 className="text-xl font-light uppercase tracking-widest mb-6">{t('FAVORİLERİM', 'FAVORITES')} ({favoriteProducts.length})</h2>
+                        {favoriteProducts.length === 0 ? <p className="text-center text-gray-500">{t('Favori listeniz boş.', 'Your favorites list is empty.')}</p> : <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">{favoriteProducts.map(p => <ProductCard key={p.id} product={p} onProductClick={onProductClick} viewMode="grid" isFavorite={true} onToggleFavorite={onToggleFavorite} language={language} />)}</div>}
+                    </div>
+                );
+                return (
+                    <div className="space-y-8 animate-fade-in">
+                        <h2 className="text-xl font-light uppercase tracking-widest mb-6">{t('PROFİL BİLGİLERİM', 'PROFILE INFORMATION')}</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="group"><label className="block text-xs text-gray-400 mb-1 uppercase tracking-wider">{t('AD', 'NAME')}</label><div className="border-b border-gray-300 py-2 text-sm text-black">{user.name}</div></div>
+                            <div className="group"><label className="block text-xs text-gray-400 mb-1 uppercase tracking-wider">{t('SOYAD', 'SURNAME')}</label><div className="border-b border-gray-300 py-2 text-sm text-black">{user.surname}</div></div>
+                        </div>
+                        <div className="pt-8 border-t border-gray-100 mt-8">
+                            <h3 className="text-sm font-semibold uppercase tracking-widest mb-6">{t('ADRES DEFTERİM', 'ADDRESS BOOK')}</h3>
+                            <div className="space-y-4 mb-6">{user.addresses && user.addresses.map(addr => <div key={addr.id} className="border border-gray-200 p-4"><p className="font-semibold text-xs uppercase mb-2">{addr.title}</p><p className="text-sm text-gray-600">{addr.fullAddress}</p></div>)}</div>
+                            {showAddressForm ? (
+                                <form onSubmit={handleSaveAddress} className="bg-gray-50 p-6 space-y-4 border border-gray-100">
+                                    <input type="text" placeholder={t('ADRES BAŞLIĞI', 'ADDRESS TITLE')} value={addressForm.title} onChange={e => setAddressForm({ ...addressForm, title: e.target.value })} className="w-full border-b border-gray-300 bg-transparent py-2 text-sm uppercase" required />
+                                    <input type="text" placeholder={t('ŞEHİR', 'CITY')} value={addressForm.city} onChange={e => setAddressForm({ ...addressForm, city: e.target.value })} className="w-full border-b border-gray-300 bg-transparent py-2 text-sm uppercase" required />
+                                    <textarea placeholder={t('ADRES', 'ADDRESS')} value={addressForm.fullAddress} onChange={e => setAddressForm({ ...addressForm, fullAddress: e.target.value })} className="w-full border-b border-gray-300 bg-transparent py-2 text-sm" required />
+                                    <div className="flex gap-4 pt-4"><button type="submit" className="bg-black text-white px-6 py-3 text-xs uppercase">KAYDET</button><button type="button" onClick={() => setShowAddressForm(false)} className="text-black border border-black px-6 py-3 text-xs uppercase">İPTAL</button></div>
+                                </form>
+                            ) : <button onClick={() => setShowAddressForm(true)} className="bg-black text-white px-6 py-3 text-xs uppercase tracking-widest">{t('YENİ ADRES EKLE', 'ADD NEW ADDRESS')}</button>}
+                        </div>
+                    </div>
+                );
+            };
+            return (
+                <div className="py-10 animate-fade-in min-h-[60vh] flex flex-col md:flex-row gap-12">
+                    <aside className="md:w-1/4">
+                        <h1 className="text-2xl font-light uppercase text-black mb-8">{t('MERHABA', 'HELLO')}, {user.name}</h1>
+                        <nav className="flex flex-col space-y-1">
+                            {['ORDERS', 'FAVORITES', 'PROFILE'].map(section => <button key={section} onClick={() => setActiveSection(section)} className={`text-left py-2 text-sm uppercase tracking-widest transition-colors ${activeSection === section ? 'text-black font-semibold border-l-2 border-black pl-3' : 'text-gray-500 border-l-2 border-transparent pl-3'}`}>{t(section === 'ORDERS' ? 'SİPARİŞLERİM' : section === 'FAVORITES' ? 'FAVORİLERİM' : 'PROFİLİM', section === 'ORDERS' ? 'MY ORDERS' : section === 'FAVORITES' ? 'FAVORITES' : 'MY PROFILE')}</button>)}
+                            <button onClick={onLogout} className="text-left py-2 text-sm uppercase tracking-widest text-red-800 border-l-2 border-transparent pl-3 mt-4 pt-4 border-t border-gray-100">{t('OTURUMU KAPAT', 'LOG OUT')}</button>
+                        </nav>
+                    </aside>
+                    <main className="md:w-3/4 bg-white md:pl-10 md:border-l border-gray-100">{renderContent()}</main>
+                </div>
+            );
+        };
+
+        // 9. Admin Panel (Updated with White Boxes & Select)
+        const AdminPanel = ({ products, categories, onAddProduct, onUpdateProduct, onDeleteProduct, onAddCategory, onDeleteCategory, onBackToHome }) => {
+            const [newCategory, setNewCategory] = useState('');
+            const [formData, setFormData] = useState({ name: '', category: '', price: '', imageMain: '', description: '' });
+            const [editingId, setEditingId] = useState(null);
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                const product = { 
+                    id: editingId || Date.now(), 
+                    ...formData, 
+                    price: Number(formData.price), 
+                    imageHover: formData.imageMain,
+                    features: [],
+                    imageDetail2: formData.imageMain, 
+                    imageDetail3: formData.imageMain 
+                };
+                editingId ? onUpdateProduct(product) : onAddProduct(product);
+                setFormData({ name: '', category: '', price: '', imageMain: '', description: '' });
+                setEditingId(null);
+            };
+
+            // Custom styles for aesthetic white boxes
+            const inputClass = "w-full bg-white border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:border-black transition-colors placeholder-gray-400";
+            const selectClass = "w-full bg-white border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:border-black transition-colors appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M6%209L12%2015L18%209%22%20stroke%3D%22black%22%20stroke-width%3D%221%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem] bg-no-repeat bg-right";
+
+            return (
+                <div className="py-10 animate-fade-in min-h-screen bg-white max-w-7xl mx-auto px-6">
+                    <div className="flex justify-between items-end mb-8 border-b border-black/10 pb-6">
+                        <h1 className="text-3xl font-light uppercase tracking-widest text-black mb-2">YÖNETİM PANELİ</h1>
+                        <button onClick={onBackToHome} className="text-xs uppercase font-semibold border border-black px-4 py-2 hover:bg-black hover:text-white">MAĞAZAYA DÖN</button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+                        
+                        {/* SOL: KATEGORİ YÖNETİMİ (3 KOLON) */}
+                        <div className="md:col-span-3 space-y-8">
+                            <div className="bg-white border border-black/10 p-6 shadow-sm">
+                                <h2 className="text-xs font-bold uppercase tracking-widest mb-6 border-b border-black/10 pb-2">KATEGORİLER</h2>
+                                <div className="flex items-center gap-2 mb-6">
+                                    <input 
+                                        type="text" 
+                                        value={newCategory} 
+                                        onChange={e => setNewCategory(e.target.value)} 
+                                        placeholder="YENİ EKLE" 
+                                        className="w-full bg-white border border-gray-200 px-3 py-2 text-xs uppercase focus:outline-none focus:border-black" 
+                                    />
+                                    <button onClick={() => {if(newCategory){onAddCategory(newCategory.toUpperCase()); setNewCategory('');}}} className="text-xs bg-black text-white px-3 py-2 hover:bg-gray-800">+</button>
+                                </div>
+                                <ul className="space-y-1">
+                                    {categories.filter(c => c !== 'TÜMÜ').map(cat => (
+                                        <li key={cat} className="flex justify-between items-center text-xs text-gray-600 py-2 px-2 hover:bg-gray-50 rounded-sm">
+                                            <span>{cat}</span>
+                                            <button onClick={() => onDeleteCategory(cat)} className="text-gray-400 hover:text-red-600 font-bold">&times;</button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* SAĞ: ÜRÜN YÖNETİMİ (9 KOLON) */}
+                        <div className="md:col-span-9 space-y-10">
+                            <div className="bg-white border border-black/10 p-8 shadow-sm">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h2 className="text-xs font-bold uppercase tracking-widest">{editingId ? 'ÜRÜNÜ DÜZENLE' : 'YENİ ÜRÜN EKLE'}</h2>
+                                    {editingId && <button onClick={() => {setEditingId(null); setFormData({ name: '', category: '', price: '', imageMain: '', description: '' });}} className="text-[10px] underline text-gray-500 uppercase">VAZGEÇ</button>}
+                                </div>
+                                <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <input type="text" placeholder="ÜRÜN ADI" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className={inputClass} />
+                                    <input type="number" placeholder="FİYAT" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className={inputClass} />
+                                    
+                                    {/* KATEGORİ SEÇİMİ (SELECT) */}
+                                    <select 
+                                        value={formData.category} 
+                                        onChange={e => setFormData({...formData, category: e.target.value})} 
+                                        className={selectClass}
+                                    >
+                                        <option value="" disabled className="text-gray-400">KATEGORİ SEÇİNİZ</option>
+                                        {categories.filter(c => c !== 'TÜMÜ').map(c => (
+                                            <option key={c} value={c}>{c}</option>
+                                        ))}
+                                    </select>
+
+                                    <input type="text" placeholder="GÖRSEL URL" value={formData.imageMain} onChange={e => setFormData({...formData, imageMain: e.target.value})} className={inputClass} />
+                                    <textarea placeholder="AÇIKLAMA" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className={`${inputClass} md:col-span-2 h-24 resize-none`} />
+                                    <button type="submit" className="bg-black text-white px-8 py-3 text-xs uppercase tracking-widest md:col-span-2 hover:bg-gray-800 transition-colors">{editingId ? 'GÜNCELLE' : 'KAYDET'}</button>
+                                </form>
+                            </div>
+                            <div className="bg-white">
+                                <h2 className="text-xs font-bold uppercase tracking-widest mb-4 border-b border-black/10 pb-2">MEVCUT ENVANTER ({products.length})</h2>
+                                <table className="w-full text-left border-collapse">
+                                    <thead><tr className="border-b border-black/10 text-gray-400"><th className="py-3 text-[10px] font-normal uppercase">ÜRÜN</th><th className="py-3 text-[10px] font-normal uppercase">FİYAT</th><th className="py-3 text-[10px] font-normal uppercase text-right">İŞLEM</th></tr></thead>
+                                    <tbody>
+                                        {products.map(p => (
+                                            <tr key={p.id} className="border-b border-gray-50 hover:bg-gray-50">
+                                                <td className="py-3 text-xs uppercase font-medium">{p.name}</td>
+                                                <td className="py-3 text-xs font-sans">{p.price} TL</td>
+                                                <td className="py-3 text-right space-x-3">
+                                                    <button onClick={() => { setEditingId(p.id); setFormData({name: p.name, category: p.category, price: p.price, imageMain: p.imageMain, description: p.description}) }} className="text-[10px] underline">DÜZENLE</button>
+                                                    <button onClick={() => onDeleteProduct(p.id)} className="text-[10px] text-red-600">SİL</button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // 10. Help Page
+        const HelpPage = ({ onBackToHome, language }) => {
+            const t = (tr, en) => language === 'tr' ? tr : en;
+            const faqs = [{q: t('SİPARİŞİM NE ZAMAN KARGOYA VERİLİR?', 'WHEN WILL MY ORDER BE SHIPPED?'), a: t('1-3 iş günü içerisinde.', 'Within 1-3 business days.')}, {q: t('İADE PROSEDÜRÜ NEDİR?', 'WHAT IS THE RETURN PROCEDURE?'), a: t('14 gün içinde ücretsiz iade.', 'Free return within 14 days.')}];
+            const [openFaq, setOpenFaq] = useState(null);
+
+            return (
+                <div className="py-10 animate-fade-in max-w-2xl mx-auto min-h-[70vh]">
+                    <button onClick={onBackToHome} className="text-lg font-semibold uppercase mb-10 flex items-center hover:opacity-70 transition-opacity"><span className="text-2xl mr-2">&larr;</span> {t('GERİ', 'BACK')}</button>
+                    <h1 className="text-3xl font-light uppercase tracking-widest text-black mb-2 text-center">{t('YARDIM', 'HELP')}</h1>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-16 mt-16">
+                        <div>
+                             <h2 className="text-sm font-bold uppercase tracking-widest mb-8 border-b border-black pb-2">{t('BİZE ULAŞIN', 'CONTACT US')}</h2>
+                             <form className="space-y-6">
+                                <input type="text" placeholder={t('AD SOYAD', 'NAME')} className="w-full border-b border-gray-300 py-3 text-sm" />
+                                <input type="email" placeholder={t('E-POSTA', 'EMAIL')} className="w-full border-b border-gray-300 py-3 text-sm" />
+                                <textarea placeholder={t('MESAJINIZ', 'MESSAGE')} className="w-full border-b border-gray-300 py-3 text-sm h-24 resize-none" />
+                                <button className="w-full bg-black text-white py-4 uppercase tracking-widest text-xs font-bold">{t('GÖNDER', 'SEND')}</button>
+                             </form>
+                        </div>
+                        <div>
+                            <h2 className="text-sm font-bold uppercase tracking-widest mb-8 border-b border-black pb-2">{t('SIKÇA SORULANLAR', 'FAQ')}</h2>
+                            <div className="space-y-4">{faqs.map((f, i) => <div key={i} className="border-b border-gray-100 pb-4"><button onClick={() => setOpenFaq(openFaq===i?null:i)} className="w-full text-left flex justify-between uppercase text-xs font-medium">{f.q} <span>{openFaq===i?'-':'+'}</span></button>{openFaq===i && <p className="text-xs text-gray-500 mt-2">{f.a}</p>}</div>)}</div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // 11. About Page
+        const AboutPage = ({ onBackToHome, language }) => {
+            const t = (tr, en) => language === 'tr' ? tr : en;
+            return (
+                <div className="py-10 animate-fade-in max-w-4xl mx-auto min-h-[80vh]">
+                    <button onClick={onBackToHome} className="text-lg font-semibold uppercase mb-16 flex items-center hover:opacity-70 transition-opacity"><span className="text-2xl mr-2">&larr;</span> {t('GERİ', 'BACK')}</button>
+                    <div className="flex flex-col items-center text-center space-y-16 px-4">
+                        <div className="max-w-2xl mx-auto space-y-6">
+                            <h1 className="font-bodoni text-5xl md:text-6xl tracking-widest uppercase leading-none">PETRA HOME</h1>
+                            <p className="text-xs font-bold uppercase tracking-[0.3em] text-gray-400">EST. 2025</p>
+                            <div className="h-px w-20 bg-black mx-auto mt-8 mb-8"></div>
+                            <p className="font-bodoni text-xl md:text-2xl leading-relaxed text-gray-800 italic">"{t('Evin ruhunu, doğanın sessiz dokunuşlarıyla iyileştiriyoruz.', 'We heal the soul of the home with silent touches of nature.')}"</p>
+                        </div>
+                        <div className="w-full aspect-[16/9] md:aspect-[21/9] bg-gray-100 overflow-hidden relative group"><img src="https://raw.githubusercontent.com/Aybukehso/petra-images/main/ATEL%C4%B0ER.jpg" className="w-full h-full object-cover transition-transform duration-[20s] ease-linear group-hover:scale-110" /><div className="absolute inset-0 bg-black/10"></div></div>
+                        <div className="pt-16 pb-8"><p className="font-bodoni text-3xl text-black">Petra</p></div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- MAIN APP COMPONENT ---
+
+        const App = () => {
+            // State
+            const [language, setLanguage] = useState('tr');
+            const [products, setProducts] = useState(initialProducts);
+            const [categories, setCategories] = useState(['TÜMÜ', 'AYNA', 'AYDINLATMA', 'DEKORATİF AKSESUAR', 'TABLO', 'MUM VE ODA KOKUSU', 'HALI']);
+            const [cart, setCart] = useState([]);
+            const [favorites, setFavorites] = useState([]);
+            const [user, setUser] = useState(null);
+            
+            // currentPage, hash routing'i (adres çubuğundaki #admin vb.) kontrol edecek şekilde güncellendi
+            const [currentPage, setCurrentPage] = useState(() => {
+                const hash = window.location.hash;
+                if (hash === '#admin') return 'admin';
+                return 'list';
+            });
+
+            const [selectedCategory, setSelectedCategory] = useState('TÜMÜ');
+            const [selectedProduct, setSelectedProduct] = useState(null);
+            const [searchTerm, setSearchTerm] = useState('');
+            const [viewMode, setViewMode] = useState('grid');
+            const [isMenuOpen, setIsMenuOpen] = useState(false);
+            const [toast, setToast] = useState({ message: '', actionLabel: null, action: null });
+
+            // Hash Change Listener
+            useEffect(() => {
+                const handleHashChange = () => {
+                    const hash = window.location.hash;
+                    if (hash === '#admin') {
+                        setCurrentPage('admin');
+                    } else if (hash === '' || hash === '#') {
+                        if (currentPage === 'admin') setCurrentPage('list');
+                    }
+                };
+                window.addEventListener('hashchange', handleHashChange);
+                return () => window.removeEventListener('hashchange', handleHashChange);
+            }, [currentPage]);
+
+            // Localization Helpers
+            const t = (tr, en) => language === 'tr' ? tr : en;
+            const DICTIONARY = {
+                tr: { newCollection: 'YENİ KOLEKSİYON', productsFound: 'ÜRÜN BULUNDU', search: 'ARA', login: 'GİRİŞ YAP', bag: 'SEPET', admin: 'YÖNETİM', home: 'PETRA HOME', help: 'YARDIM', about: 'HAKKIMIZDA' },
+                en: { newCollection: 'NEW COLLECTION', productsFound: 'PRODUCTS FOUND', search: 'SEARCH', login: 'LOG IN', bag: 'BAG', admin: 'ADMIN', home: 'PETRA HOME', help: 'HELP', about: 'ABOUT US' }
+            };
+            const CATEGORY_TRANSLATIONS = { 'TÜMÜ': 'ALL', 'AYNA': 'MIRRORS', 'AYDINLATMA': 'LIGHTING', 'DEKORATİF AKSESUAR': 'DECORATION', 'TABLO': 'ARTWORKS', 'MUM VE ODA KOKUSU': 'FRAGRANCES', 'HALI': 'RUGS' };
+            const getCategoryName = (cat) => (language === 'en' && CATEGORY_TRANSLATIONS[cat]) ? CATEGORY_TRANSLATIONS[cat] : cat;
+            
+            // Computed
+            const localizedProducts = useMemo(() => products.map(p => language === 'tr' ? p : { ...p, name: p.name_en || p.name, category: p.category_en || p.category, description: p.description_en || p.description, features: p.features_en || p.features }), [products, language]);
+            
+            const filteredProducts = useMemo(() => {
+                let filtered = localizedProducts;
+                if (selectedCategory !== 'TÜMÜ') {
+                   const targetCat = language === 'en' && CATEGORY_TRANSLATIONS[selectedCategory] ? CATEGORY_TRANSLATIONS[selectedCategory] : selectedCategory;
+                   filtered = filtered.filter(p => p.category === targetCat);
+                }
+                if (searchTerm) filtered = filtered.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+                return filtered;
+            }, [selectedCategory, searchTerm, localizedProducts, language]);
+
+            const cartItemCount = cart.reduce((total, item) => total + item.quantity, 0);
+
+            // Handlers
+            const showToast = (message, actionLabel = null, action = null) => {
+                setToast({ message, actionLabel, action });
+                setTimeout(() => setToast({ message: '', actionLabel: null, action: null }), 3000);
+            };
+
+            const addToCart = (product) => {
+                setCart(prev => {
+                    const exists = prev.find(p => p.id === product.id);
+                    if (exists) return prev.map(p => p.id === product.id ? { ...p, quantity: p.quantity + 1 } : p);
+                    return [...prev, { ...product, quantity: 1 }];
+                });
+                showToast(t('ÜRÜN SEPETE EKLENDİ', 'ADDED TO BAG'), t('SEPETE GİT', 'VIEW BAG'), () => setCurrentPage('cart'));
+            };
+
+            const toggleFavorite = (id) => {
+                if (!user) return showToast(t('Lütfen giriş yapın', 'Please log in'));
+                setFavorites(prev => prev.includes(id) ? prev.filter(fid => fid !== id) : [...prev, id]);
+                showToast(favorites.includes(id) ? t('Favorilerden çıkarıldı', 'Removed from favorites') : t('Favorilere eklendi', 'Added to favorites'));
+            };
+
+            // Navigation
+            const handleProductClick = (p) => { setSelectedProduct(p); setCurrentPage('detail'); setIsMenuOpen(false); };
+            const handleBackToList = () => { 
+                setSelectedProduct(null); 
+                setCurrentPage('list');
+                // Reset hash if we go back to list from admin
+                if (window.location.hash === '#admin') {
+                    history.pushState("", document.title, window.location.pathname + window.location.search);
+                }
+            };
+            
+            // Admin Auth Check Effect
+            useEffect(() => {
+                if (currentPage === 'admin' && (!user || !user.isAdmin)) {
+                    // Eğer admin sayfasındaysa ama admin girişi yoksa logine at
+                    setCurrentPage('login');
+                    showToast(t('Yönetim paneli için yetkili girişi gereklidir.', 'Admin access requires authorization.'));
+                }
+            }, [currentPage, user]);
+
+            // Content Renderer
+            const renderContent = () => {
+                if (currentPage === 'login') return <LoginPage onBackToHome={handleBackToList} onLoginAttempt={(e, p) => { if(e==='petra'&&p==='1234') { setUser({name:'PETRA', isAdmin:true}); setCurrentPage('admin'); return true; } setUser({name:'Misafir', surname:'Kullanıcı', email:e}); setCurrentPage('list'); return true; }} onRegisterAttempt={(u) => { setUser(u); setCurrentPage('list'); return true; }} language={language} />;
+                if (currentPage === 'cart') return <CartPage cart={cart} onBackToHome={handleBackToList} onRemoveFromCart={(id) => setCart(prev => prev.filter(p => p.id !== id))} onUpdateQuantity={(id, d) => setCart(prev => prev.map(p => p.id === id ? { ...p, quantity: p.quantity + d } : p).filter(p => p.quantity > 0))} onCheckout={() => showToast('Demo Mode')} language={language} />;
+                if (currentPage === 'detail') return <ProductDetail product={selectedProduct} cart={cart} onClose={handleBackToList} onAddToCart={addToCart} onGoToCart={() => setCurrentPage('cart')} language={language} />;
+                if (currentPage === 'account') return <AccountPage user={user} onLogout={() => setUser(null) || setCurrentPage('list')} onBackToHome={handleBackToList} favoriteProducts={localizedProducts.filter(p => favorites.includes(p.id))} onProductClick={handleProductClick} onToggleFavorite={toggleFavorite} onAddAddress={(addr) => setUser({...user, addresses: [...(user.addresses||[]), addr]})} language={language} />;
+                if (currentPage === 'admin') {
+                     if (!user || !user.isAdmin) return null; // Render etme, useEffect redirect edecek
+                     return <AdminPanel products={products} categories={categories} onAddProduct={(p) => setProducts([p, ...products])} onUpdateProduct={(p) => setProducts(products.map(pr => pr.id===p.id?p:pr))} onDeleteProduct={(id) => setProducts(products.filter(p => p.id!==id))} onAddCategory={(c) => setCategories([...categories, c])} onDeleteCategory={(c) => setCategories(categories.filter(cat => cat !== c))} onBackToHome={handleBackToList} />;
+                }
+                if (currentPage === 'help') return <HelpPage onBackToHome={handleBackToList} language={language} />;
+                if (currentPage === 'about') return <AboutPage onBackToHome={handleBackToList} language={language} />;
+                
+                // List View
+                return (
+                    <>
+                        <div className="flex justify-between items-end mb-8 mt-4 md:mt-0">
+                            <div>
+                                <h2 className="text-3xl md:text-4xl font-light uppercase tracking-widest text-black">{selectedCategory === 'TÜMÜ' ? DICTIONARY[language].newCollection : getCategoryName(selectedCategory)}</h2>
+                                <p className="text-sm text-gray-700 mt-2">{filteredProducts.length} {DICTIONARY[language].productsFound}</p>
+                            </div>
+                            <div className="flex space-x-2">
+                                <button onClick={() => setViewMode('grid')} className={`p-1 border ${viewMode==='grid'?'border-black':'border-gray-200'}`}><svg width="18" height="18" viewBox="0 0 20 20"><rect x="0" y="0" width="8" height="8"/><rect x="12" y="0" width="8" height="8"/><rect x="0" y="12" width="8" height="8"/><rect x="12" y="12" width="8" height="8"/></svg></button>
+                                <button onClick={() => setViewMode('compact')} className={`p-1 border ${viewMode==='compact'?'border-black':'border-gray-200'}`}><svg width="18" height="18" viewBox="0 0 20 20"><rect width="4" height="4"/><rect x="6" width="4" height="4"/><rect x="12" width="4" height="4"/></svg></button>
+                            </div>
+                        </div>
+                        <section className={viewMode === 'grid' ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6" : "grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-3"}>
+                            {filteredProducts.map(p => <ProductCard key={p.id} product={p} onProductClick={handleProductClick} viewMode={viewMode} isFavorite={favorites.includes(p.id)} onToggleFavorite={toggleFavorite} language={language} />)}
+                        </section>
+                        {filteredProducts.length === 0 && <div className="text-center py-20 text-gray-500">{t('Ürün bulunamadı.', 'No products found.')}</div>}
+                    </>
+                );
+            };
+
+            return (
+                <div className="min-h-screen bg-white text-black antialiased font-sans pb-20 relative">
+                    <MenuSidebar isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} categories={categories} selectedCategory={selectedCategory} onSelectCategory={(c) => {setSelectedCategory(c); setCurrentPage('list');}} onLoginClick={() => { setIsMenuOpen(false); user ? setCurrentPage('account') : setCurrentPage('login'); }} onHelpClick={() => {setIsMenuOpen(false); setCurrentPage('help');}} onAboutClick={() => {setIsMenuOpen(false); setCurrentPage('about');}} user={user} language={language} />
+                    
+                    <header className={`fixed top-0 left-0 w-full bg-white z-20 border-b border-black/10 ${currentPage !== 'list' && currentPage !== 'admin' ? 'hidden md:block' : ''}`}>
+                        <div className="flex justify-between items-center h-16 max-w-7xl mx-auto px-4 md:px-8">
+                            <div className="flex items-center space-x-2">
+                                <button onClick={() => setIsMenuOpen(true)} className="h-10 w-10 flex items-center justify-center hover:opacity-70"><svg width="20" height="20" viewBox="0 0 20 20"><rect y="3" width="20" height="2"/><rect y="9" width="20" height="2"/><rect y="15" width="20" height="2"/></svg></button>
+                                <h1 className="font-bodoni tracking-[0.2em] text-2xl md:text-3xl font-medium uppercase leading-none cursor-pointer" onClick={handleBackToList}>PETRA HOME</h1>
+                            </div>
+                            <div className="flex items-center space-x-4">
+                                {currentPage !== 'admin' && <input type="text" placeholder={DICTIONARY[language].search} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-20 md:w-32 bg-transparent border-b border-black/60 focus:border-black text-xs tracking-widest font-sans uppercase text-black focus:outline-none" />}
+                                <button onClick={() => user ? setCurrentPage('account') : setCurrentPage('login')} className="font-sans text-xs tracking-widest uppercase text-black hidden md:block hover:opacity-60">{user ? user.name : DICTIONARY[language].login}</button>
+                                <button onClick={() => setCurrentPage('cart')} className="font-sans text-xs tracking-widest uppercase text-black hover:opacity-60">{DICTIONARY[language].bag} ({cartItemCount})</button>
+                            </div>
+                        </div>
+                    </header>
+
+                    <main className="max-w-7xl mx-auto pt-20 md:pt-20 px-4 md:px-8">{renderContent()}</main>
+
+                    <div className="fixed bottom-8 left-0 w-full h-10 bg-white/90 backdrop-blur-md border-t border-black/5 z-40 flex justify-between items-center px-6 md:px-8 text-[10px] uppercase tracking-widest font-medium">
+                        <div className="flex items-center space-x-1">
+                            <button onClick={handleBackToList} className="font-bold hover:opacity-60">{DICTIONARY[language].home}</button>
+                            {selectedCategory !== 'TÜMÜ' && currentPage === 'list' && <><span className="text-gray-400">/</span><span>{getCategoryName(selectedCategory)}</span></>}
+                            {currentPage === 'detail' && selectedProduct && <><span className="text-gray-400">/</span><span className="text-gray-500 max-w-[150px] truncate">{selectedProduct.name}</span></>}
+                        </div>
+                        <div className="flex items-center space-x-3">
+                            <button onClick={() => setLanguage('tr')} className={`hover:opacity-60 ${language==='tr'?'font-bold':''}`}>Türkçe</button>
+                            <span className="opacity-30">|</span>
+                            <button onClick={() => setLanguage('en')} className={`hover:opacity-60 ${language==='en'?'font-bold':''}`}>English</button>
+                        </div>
+                    </div>
+                    
+                    <ToastNotification message={toast.message} isVisible={!!toast.message} actionLabel={toast.actionLabel} onAction={toast.action} />
+                    <WhatsAppButton />
+                </div>
+            );
+        };
+
+        // --- RENDER ---
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petra Home</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;500;600&family=Inter:wght@200;300;400;500;600&display=swap');
+      html, body { height: 100%; width: 100%; margin: 0; padding: 0; background-color: white; color: black; overflow-x: hidden; }
+      #root { min-height: 100%; }
+      body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+      .font-bodoni { font-family: 'Bodoni Moda', serif; }
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+      .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+      input::placeholder { color: #9ca3af; }
+    </style>
+    <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@19.0.0",
+    "react-dom": "https://esm.sh/react-dom@19.0.0",
+    "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
+    "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
+    "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "firebase/": "https://esm.sh/firebase@^12.7.0/"
+  }
+}
+</script>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="module" src="./index.tsx"></script>
+</body>
+</html>
